@@ -6,5 +6,13 @@
     "description": "A block to view package.json files",
     "entry": "blocks/package-json/index.tsx",
     "matches": ["*.json"]
+  },
+  {
+    "type": "file",
+    "id": "preview",
+    "title": "Preview JavaScript/TypeScript files",
+    "description": "A block to preview JavaScript/TypeScript files that render to the browser",
+    "entry": "blocks/preview/index.tsx",
+    "matches": ["*.js", "*.jsx", "*.ts", "*.tsx"]
   }
 ]

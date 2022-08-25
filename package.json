@@ -7,8 +7,13 @@
     "build": "blocks build"
   },
   "dependencies": {
-    "@githubnext/blocks": "^2.0.5",
+    "@githubnext/blocks": "^2.0.8",
+    "esbuild-wasm": "^0.15.5",
+    "path-browserify": "^1.0.1",
     "react": "^18.1.0",
     "react-dom": "^18.1.0"
+  },
+  "devDependencies": {
+    "@types/path-browserify": "^1.0.0"
   }
 }
