@@ -14,5 +14,13 @@
     "description": "A block to preview JavaScript/TypeScript files that render to the browser",
     "entry": "blocks/preview/index.tsx",
     "matches": ["*.js", "*.jsx", "*.ts", "*.tsx"]
+  },
+  {
+    "type": "file",
+    "id": "storyblock",
+    "title": "Storyblock",
+    "description": "A block to preview components a la Storybook",
+    "entry": "blocks/storyblock/index.tsx",
+    "matches": ["*.js", "*.jsx", "*.ts", "*.tsx"]
   }
 ]
