@@ -219,6 +219,7 @@ function valueOfType(name: string, type: Type): unknown {
       if (name === "title") return "I'm the title!";
       return "I'm a string!";
     case "number":
+      if (name === "height") return 20;
       return 7;
     case "boolean":
       if (name === "hasIcon") return true;
@@ -332,7 +333,7 @@ const propFixups: Record<string, PropFixup[]> = {
       kind: "replace",
       name: "appearance",
       type: Type.enum_("default", "primary", "minimal"),
-      value: "primary",
+      value: "default",
     },
     {
       kind: "replace",
@@ -347,18 +348,34 @@ const propFixups: Record<string, PropFixup[]> = {
       value: "I'm a Button!",
     },
   ],
+  Checkbox: [
+    {
+      kind: "replace",
+      name: "appearance",
+      type: Type.enum_("default", "primary", "minimal"),
+      value: "default",
+    },
+  ],
   IconButton: [
     {
       kind: "replace",
       name: "appearance",
       type: Type.enum_("default", "primary", "minimal"),
-      value: "primary",
+      value: "default",
     },
     {
       kind: "replace",
       name: "intent",
       type: Type.enum_("none", "success", "danger"),
       value: "success",
+    },
+  ],
+  Pagination: [
+    {
+      kind: "replace",
+      name: "page",
+      type: Type.number,
+      value: 1,
     },
   ],
   TextDropdownButton: [
@@ -381,6 +398,30 @@ const propFixups: Record<string, PropFixup[]> = {
       name: "children",
       type: Type.string,
       value: "I'm a Dialog!",
+    },
+  ],
+  Switch: [
+    {
+      kind: "replace",
+      name: "appearance",
+      type: Type.enum_("default", "primary", "minimal"),
+      value: "default",
+    },
+  ],
+  Textarea: [
+    {
+      kind: "replace",
+      name: "appearance",
+      type: Type.enum_("default", "primary", "minimal"),
+      value: "default",
+    },
+  ],
+  TextInput: [
+    {
+      kind: "replace",
+      name: "appearance",
+      type: Type.enum_("default", "primary", "minimal"),
+      value: "default",
     },
   ],
 };
