@@ -5,78 +5,6 @@ import { FileBlockProps, RepoFiles } from "@githubnext/blocks";
 
 // with grateful thanks to https://github.com/lukedxvxes/esbuild-in-browser/
 
-// leaving this @radix-ui stuff here for the future but it doesn't work
-
-// fetching dependencies from unpkg only works in simple cases since it doesn't
-// consider versions. to do a good job I think we'd need to parse the
-// `package.json`s and fetch the appropriate version for the resolution context.
-
-const radixUiPaths: Record<string, string[]> = {
-  "@radix-ui/number": ["./packages/core/number/src"],
-  "@radix-ui/primitive": ["./packages/core/primitive/src"],
-  "@radix-ui/rect": ["./packages/core/rect/src"],
-  "@radix-ui/react-accessible-icon": ["./packages/react/accessible-icon/src"],
-  "@radix-ui/react-accordion": ["./packages/react/accordion/src"],
-  "@radix-ui/react-alert-dialog": ["./packages/react/alert-dialog/src"],
-  "@radix-ui/react-announce": ["./packages/react/announce/src"],
-  "@radix-ui/react-arrow": ["./packages/react/arrow/src"],
-  "@radix-ui/react-aspect-ratio": ["./packages/react/aspect-ratio/src"],
-  "@radix-ui/react-avatar": ["./packages/react/avatar/src"],
-  "@radix-ui/react-checkbox": ["./packages/react/checkbox/src"],
-  "@radix-ui/react-collapsible": ["./packages/react/collapsible/src"],
-  "@radix-ui/react-collection": ["./packages/react/collection/src"],
-  "@radix-ui/react-compose-refs": ["./packages/react/compose-refs/src"],
-  "@radix-ui/react-context": ["packages/react/context/src"],
-  "@radix-ui/react-context-menu": ["packages/react/context-menu/src"],
-  "@radix-ui/react-dialog": ["./packages/react/dialog/src"],
-  "@radix-ui/react-direction": ["./packages/react/direction/src"],
-  "@radix-ui/react-dismissable-layer": [
-    "./packages/react/dismissable-layer/src",
-  ],
-  "@radix-ui/react-dropdown-menu": ["packages/react/dropdown-menu/src"],
-  "@radix-ui/react-focus-guards": ["packages/react/focus-guards/src"],
-  "@radix-ui/react-focus-scope": ["./packages/react/focus-scope/src"],
-  "@radix-ui/react-hover-card": ["./packages/react/hover-card/src"],
-  "@radix-ui/react-id": ["./packages/react/id/src"],
-  "@radix-ui/react-label": ["./packages/react/label/src"],
-  "@radix-ui/react-menu": ["./packages/react/menu/src"],
-  "@radix-ui/react-navigation-menu": ["./packages/react/navigation-menu/src"],
-  "@radix-ui/react-popover": ["./packages/react/popover/src"],
-  "@radix-ui/react-popper": ["./packages/react/popper/src"],
-  "@radix-ui/react-portal": ["./packages/react/portal/src"],
-  "@radix-ui/react-presence": ["./packages/react/presence/src"],
-  "@radix-ui/react-primitive": ["./packages/react/primitive/src"],
-  "@radix-ui/react-progress": ["packages/react/progress/src"],
-  "@radix-ui/react-radio-group": ["./packages/react/radio-group/src"],
-  "@radix-ui/react-roving-focus": ["./packages/react/roving-focus/src"],
-  "@radix-ui/react-scroll-area": ["./packages/react/scroll-area/src"],
-  "@radix-ui/react-select": ["./packages/react/select/src"],
-  "@radix-ui/react-separator": ["./packages/react/separator/src"],
-  "@radix-ui/react-slider": ["./packages/react/slider/src"],
-  "@radix-ui/react-slot": ["./packages/react/slot/src"],
-  "@radix-ui/react-switch": ["./packages/react/switch/src"],
-  "@radix-ui/react-tabs": ["./packages/react/tabs/src"],
-  "@radix-ui/react-toast": ["./packages/react/toast/src"],
-  "@radix-ui/react-toggle": ["./packages/react/toggle/src"],
-  "@radix-ui/react-toggle-group": ["./packages/react/toggle-group/src"],
-  "@radix-ui/react-toolbar": ["./packages/react/toolbar/src"],
-  "@radix-ui/react-tooltip": ["./packages/react/tooltip/src"],
-  "@radix-ui/react-use-callback-ref": ["./packages/react/use-callback-ref/src"],
-  "@radix-ui/react-use-controllable-state": [
-    "./packages/react/use-controllable-state/src",
-  ],
-  "@radix-ui/react-use-escape-keydown": [
-    "./packages/react/use-escape-keydown/src",
-  ],
-  "@radix-ui/react-use-layout-effect": [
-    "./packages/react/use-layout-effect/src",
-  ],
-  "@radix-ui/react-use-previous": ["./packages/react/use-previous/src"],
-  "@radix-ui/react-use-rect": ["./packages/react/use-rect/src"],
-  "@radix-ui/react-use-size": ["./packages/react/use-size/src"],
-  "@radix-ui/react-visually-hidden": ["./packages/react/visually-hidden/src"],
-};
-
 type FilesMap = Map<string, "tree" | "blob">;
 
 function resolvePathInFilesMap(
@@ -108,12 +36,12 @@ export const blocksPlugin = ({
   filesMap,
   context,
   content,
-  onRequestGitHubData,
+  fetchRepoFile,
 }: {
   filesMap: FilesMap;
   context: FileBlockProps["context"];
   content: string;
-  onRequestGitHubData: FileBlockProps["onRequestGitHubData"];
+  fetchRepoFile: (path: string) => Promise<string>;
 }) => {
   return {
     name: "blocks-plugin",
@@ -131,6 +59,10 @@ export const blocksPlugin = ({
       build.onLoad(
         { filter: /^__content__$/, namespace: "content" },
         async (args) => {
+          const pluginData = JSON.parse(await fetchRepoFile("/package.json"))[
+            "dependencies"
+          ];
+
           const resolveDir = Path.dirname(context.path);
           return {
             contents: content,
@@ -138,21 +70,10 @@ export const blocksPlugin = ({
             // TODO(jaked) derive from file extension
             loader: "jsx",
             resolveDir,
+            pluginData,
           };
         }
       );
-
-      build.onResolve({ filter: /^@radix-ui/ }, (args) => {
-        const resolvedPath = resolvePathInFilesMap(
-          radixUiPaths[args.path][0].substring(1),
-          filesMap
-        );
-
-        return {
-          path: resolvedPath,
-          namespace: "repo",
-        };
-      });
 
       // relative imports stay in the same namespace
       // except that imports from 'content' go to 'repo'
@@ -169,21 +90,45 @@ export const blocksPlugin = ({
         return {
           path: resolvedPath,
           namespace: resolvedNamespace,
+          pluginData: args.pluginData,
         };
       });
 
-      // other imports go to unpkg
+      // bare imports go to unpkg
       build.onResolve({ filter: /.*/ }, (args) => {
         return {
           path: args.path,
           namespace: "unpkg",
+          pluginData: args.pluginData,
         };
       });
 
       build.onLoad({ filter: /.*/, namespace: "unpkg" }, async (args) => {
-        const url = `https://unpkg.com${args.path.startsWith("/") ? "" : "/"}${
-          args.path
-        }`;
+        // esbuild normalizes resolveDir so it starts with /
+        // so relative imports start with / since we join them to resolveDir
+        const relative = args.path.startsWith("/");
+        const path = relative ? args.path.substring(1) : args.path;
+
+        // see https://www.npmjs.com/package/validate-npm-package-name
+        const { pkg, rest } =
+          /^(?<pkg>(@[\w.-]+\/[\w.-]+)|([\w.-]+))(?<rest>.*)$/.exec(path)
+            ?.groups!;
+
+        const nestedPluginData = relative
+          ? args.pluginData
+          : await (async () => {
+              const url = `https://unpkg.com/${pkg}/package.json`;
+              const response = await fetch(url);
+              const body = await response.text();
+              const dependencies = JSON.parse(body)["dependencies"];
+              return dependencies;
+            })();
+
+        const version =
+          args.pluginData && args.pluginData[pkg]
+            ? `@${args.pluginData[pkg]}`
+            : "";
+        const url = `https://unpkg.com/${pkg}${version}${rest}`;
         const response = await fetch(url);
         const body = await response.text();
 
@@ -192,20 +137,19 @@ export const blocksPlugin = ({
           // TODO(jaked) derive from file extension
           loader: "jsx",
           resolveDir: Path.dirname(new URL(response.url).pathname),
+          pluginData: nestedPluginData,
         };
       });
 
       build.onLoad({ filter: /.*/, namespace: "repo" }, async (args) => {
-        const { owner, repo } = context;
-        const url = `/repos/${owner}/${repo}/contents/${args.path}`;
-        const response = await onRequestGitHubData(url);
-        const body = atob(response.content);
+        const body = await fetchRepoFile(args.path);
 
         return {
           contents: body,
           // TODO(jaked) derive from file extension
           loader: "jsx",
           resolveDir: Path.dirname(args.path),
+          pluginData: args.pluginData,
         };
       });
     },
@@ -223,6 +167,14 @@ export default function (props: FileBlockProps) {
       type === "blob" ? "blob" : "tree",
     ])
   );
+
+  const fetchRepoFile = async (path: string): Promise<string> => {
+    const { owner, repo } = context;
+    const url = `/repos/${owner}/${repo}/contents${path}`;
+    const response = await onRequestGitHubData(url);
+    const body = atob(response.content);
+    return body;
+  };
 
   useEffect(() => {
     if (initialized) return;
@@ -242,9 +194,7 @@ export default function (props: FileBlockProps) {
       .build({
         bundle: true,
         entryPoints: ["__content__"],
-        plugins: [
-          blocksPlugin({ filesMap, context, content, onRequestGitHubData }),
-        ],
+        plugins: [blocksPlugin({ filesMap, context, content, fetchRepoFile })],
       })
       .then((result) => {
         if (result.outputFiles && result.outputFiles[0]) {
